@@ -1,0 +1,32 @@
+
+            const fs = require("fs")
+            const promises = require("fs")
+            const DOMParser = require("xmldom")
+            const canvas = require("canvas")
+            const fetch = require ("node-fetch")
+            const canvg = require("canvg")
+
+            const preset = canvg.presets.node({
+                DOMParser,
+                canvas,
+                fetch,
+                ignoreMouse: true,
+                ignoreAnimation: true,
+              });
+
+            (async (output, input) => {
+                const svg = fs.readFile('./*.svg')
+                const canvas = preset.createCanvas(800, 600)
+                const ctx = canvas.getContext('2d')
+                const v = canvg.fromString(ctx, svg, preset)
+              
+                // Render only first frame, ignoring animations.
+                await v.render()
+              
+                const png = canvas.toBuffer()
+              
+                await fs.writeFile(output, png)
+              })(
+                './*.png',
+                './*.svg'
+              )
