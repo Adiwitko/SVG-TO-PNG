@@ -2,6 +2,7 @@ const express = require("express")
 const path = require("path")
 const multer = require("multer")
 const app = express()
+const PORT = 8080;
     
 
 // View Engine Setup
@@ -10,7 +11,6 @@ app.set("view engine","ejs")
     
 var upload = multer({ dest: "./" })
 
-    
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
   
@@ -44,16 +44,16 @@ var upload = multer({
       
         cb("Error: File upload only supports the "
                 + "following filetypes - " + filetypes);
-      } 
+      }       
   
-// mypic is the name of file attribute
+// svg_file is the name of file attribute
 }).single("svg_file");       
   
 app.get("/",function(req,res){
-    res.render("Signup");
+    res.render("front-page");
 })
-    
-app.post("/fileupload",function (req, res, next) {
+
+app.post("/upload_convert",function (req, res, next) {
         
     // Error MiddleWare for multer file upload, so if any
     // error occurs, the image would not be uploaded!
@@ -68,14 +68,44 @@ app.post("/fileupload",function (req, res, next) {
         }
         else {
             res.send("file uploaded")
+
+            const fs = require("fs").promises
+            const { DOMParser } = require('xmldom')
+            const canvas = require("canvas")
+            const fetch = require('node-fetch')
+            const {Canvg,presets} = require("canvg")
+
+            const preset = presets.node({
+                DOMParser,
+                canvas,
+                fetch
+              });
+              
+              (async (output, input) => {
+                const svg = await fs.readFile(input, 'utf8')
+                const canvas = preset.createCanvas(800, 600)
+                const ctx = canvas.getContext('2d')
+                const v = Canvg.fromString(ctx, svg, preset)
+              
+                // Render only first frame, ignoring animations.
+                await v.render()
+              
+                const png = canvas.toBuffer()
+              
+                await fs.writeFile(output, png)
+              })(
+                './png_file-1667814851988.png',
+                './svg_file-1667814851988.svg'
+              )
             
         }
         })
     })
 
+
 // Take any port number of your choice which
 // is not taken by any other process
-app.listen(8080,function(error) {
+app.listen(PORT,function(error) {
     if(error) throw error
-        console.log("Server created Successfully on PORT 8080")
+        console.log("Server created Successfully on PORT", PORT)
 })
